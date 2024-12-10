@@ -1,105 +1,82 @@
--- Anime Center BR Extension for Shosetsu
-local AnimeCenterBR = {}
+local http = require("socket.http")
+local ltn12 = require("ltn12")
+local json = require("cjson")
 
-local id = 123456 -- ID único para a extensão
-local baseURL = "https://animecenterbr.com"
-local name = "Anime Center BR"
+-- Função para obter a lista de novels
+local function getNovelsList()
+    local url = "https://animecenterbr.com/wp-json/wp/v2/pages/17073"
+    local response_body = {}
+    local res, code = http.request{
+        url = url,
+        sink = ltn12.sink.table(response_body)
+    }
 
-local function shrinkURL(url)
-    return url:gsub("^" .. baseURL, "")
-end
-
-local function expandURL(path)
-    return baseURL .. path
-end
-
--- Função para buscar o conteúdo de um capítulo
-function AnimeCenterBR.getPassage(url)
-    local response = http:get(url)
-
-    if response then
-        local html = response:html()
-
-        -- Seleciona o conteúdo principal do capítulo
-        local content = html:select("div.post-text-content.my-3") -- Substitua pelo seletor correto da página
-
-        if content then
-            return content:html() -- Retorna o HTML do capítulo
-        end
-    end
-
-    return nil -- Retorna nil se o conteúdo não for encontrado
-end
-
--- Função para buscar capítulos de uma novel
-local function getChapterList(novelID)
-    local url = expandURL("/wp-json/wp/v2/posts/" .. novelID)
-    local data = http:get(url):json()
-    local chapters = {}
-
-    if data and data.content and data.content.rendered then
+    if res then
+        local data = json.decode(table.concat(response_body))
         local contentHTML = data.content.rendered
+        local novels = {}
 
-        -- Aqui você precisa extrair os links e títulos dos capítulos manualmente
         for link, title in contentHTML:gmatch('<a href="(.-)".->(.-)</a>') do
-            table.insert(chapters, {
-                name = title,
-                url = expandURL(link)
+            table.insert(novels, {
+                title = title,
+                url = link
             })
         end
+
+        return novels
     end
 
-    return chapters
+    return {}
 end
 
--- Função para processar uma novel
-local function parseNovel(novelID)
-    local url = expandURL("/wp-json/wp/v2/posts/" .. novelID)
-    local data = http:get(url):json()
+-- Função para obter detalhes de uma novel
+local function getNovelDetails(postID)
+    local url = "https://animecenterbr.com/wp-json/wp/v2/posts/" .. postID
+    local response_body = {}
+    local res, code = http.request{
+        url = url,
+        sink = ltn12.sink.table(response_body)
+    }
 
-    if data then
-        return NovelInfo {
+    if res then
+        local data = json.decode(table.concat(response_body))
+        return {
             title = data.title.rendered,
-            imageURL = data.featured_media_url or "",
             description = data.content.rendered,
-            chapters = getChapterList(novelID)
+            imageURL = data.featured_media_url or "",
         }
     end
 
-    return nil -- Retorna nil se a novel não for encontrada
+    return nil
 end
 
--- Função para processar a lista de novels
-local function parseList()
-    local url = expandURL("/wp-json/wp/v2/pages/17073")
-    local data = http:get(url):json()
-    local novels = {}
+-- Função para obter o conteúdo de um capítulo
+local function getChapterContent(chapterURL)
+    local encodedURL = http.escape(chapterURL)
+    local url = "https://animecenterbr.com/wp-json/oembed/1.0/embed?url=https%3A%2F%2F" .. encodedURL .. "&format=json"
+    
+    local response_body = {}
+    local res, code = http.request{
+        url = url,
+        sink = ltn12.sink.table(response_body)
+    }
 
-    if data and data.content and data.content.rendered then
-        local contentHTML = data.content.rendered
-
-        -- Extrai títulos e links de novels
-        for link, title in contentHTML:gmatch('<a href="(.-)".->(.-)</a>') do
-            table.insert(novels, {
-                name = title,
-                url = expandURL(link)
-            })
-        end
+    if res then
+        local data = json.decode(table.concat(response_body))
+        return data.html
     end
 
-    return novels
+    return nil
 end
 
--- Retorna a extensão no formato esperado pelo Shosetsu
-return {
-    id = id,
-    name = name,
-    baseURL = baseURL,
-    hasSearch = false,
-    listings = {
-        Listing("Lista de Novels", true, function()
-            return parseList()
-        end)
-    },
-    parseNovel = parseNovel
-}
+-- Exemplo de uso
+local novels = getNovelsList() -- Pega a lista de novels
+for _, novel in ipairs(novels) do
+    print("Novel: " .. novel.title)
+    local details = getNovelDetails("3211") -- Exemplo usando o ID 3211 (DanMachi)
+    print("Descrição: " .. details.description)
+
+    -- Pega os capítulos
+    local chapters = getChapterContent("https://animecenterbr.com/danmachi-light-novel-prologo-vol-01/")
+    print("Capítulo 1 conteúdo: " .. chapters)
+end
