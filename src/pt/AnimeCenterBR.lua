@@ -14,8 +14,8 @@ local function expandURL(url)
 end
 
 return {
-    id = 93083,
-    name = "AnimeCenterBR",
+    id = 12345,
+    name = "Anime Center BR",
     baseURL = baseURL,
     imageURL = "https://raw.githubusercontent.com/arthurony/repositorio/refs/heads/main/icons/animecenterbr.png",
     hasSearch = false,
@@ -58,20 +58,14 @@ return {
             local chapters = { parseChapters(doc) }
             chapters = flatten(chapters)
 
-            -- Ordenar capítulos
-            table.sort(chapters, function(a, b)
-                local aNumber = tonumber(a.title:match("%d+")) or 0
-                local bNumber = tonumber(b.title:match("%d+")) or 0
-                return aNumber < bNumber
-            end)
-
             local o = 1
-            for i = 1, #chapters do
+            for i = #chapters, 1, -1 do
                 chapters[i]:setOrder(o)
                 o = o + 1
             end
 
             local chaptersList = AsList(chapters)
+            Reverse(chaptersList)
             info:setChapters(chaptersList)
         end
 
