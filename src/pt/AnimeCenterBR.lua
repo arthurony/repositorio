@@ -44,6 +44,29 @@ local function parseList()
     return novels
 end
 
+function getPassage(url)
+    -- Extrai o ID do post do URL (pode ser necessário ajustar dependendo do formato do URL)
+    local id = url:match("posts/(%d+)")
+    if not id then return nil end
+
+    -- Monta o endpoint da API com o ID do post
+    local apiUrl = "https://animecenterbr.com/wp-json/wp/v2/posts/" .. id
+
+    -- Faz uma requisição HTTP para a API
+    local response = http:get(apiUrl)
+    if response then
+        -- Faz o parse do JSON retornado
+        local json = response:json()
+        if json and json.content and json.content.rendered then
+            -- Retorna o conteúdo do capítulo
+            return json.content.rendered
+        end
+    end
+
+    return nil -- Retorna nil caso algo dê errado
+end
+
+
 return {
     id = id,
     name = name,
