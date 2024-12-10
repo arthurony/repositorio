@@ -11,15 +11,15 @@ local function expandURL(path)
     return baseURL .. path
 end
 
-function getPassage(url)
+local function getPassage(url)
     -- Realiza uma requisição HTTP para obter o conteúdo da página do capítulo
     local response = http:get(url)
     
     if response then
         local html = response:html()
         
-        -- Extraia o conteúdo do capítulo usando seletores CSS
-        local content = html:select("div.post-text-content my-3") -- Altere 'div.entry-content' para o seletor correto da página
+        -- Extraia o conteúdo do capítulo usando o seletor CSS correto
+        local content = html:select("div.post-text-content.my-3") -- Substitua pelo seletor exato da página
         
         if content then
             return content:html() -- Retorna o HTML do capítulo
@@ -28,6 +28,11 @@ function getPassage(url)
     
     return nil -- Retorna nil se a requisição falhar ou o conteúdo não for encontrado
 end
+
+return {
+    getPassage = getPassage -- Retorna a função como parte da extensão
+}
+
 
 
 -- Função para buscar capítulos de uma novel
