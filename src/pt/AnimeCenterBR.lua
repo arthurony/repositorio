@@ -1,5 +1,3 @@
-local http = require("socket.http")
-local ltn12 = require("ltn12")
 local json = require("cjson")
 
 -- Função para obter a lista de novels
