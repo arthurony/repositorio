@@ -1,5 +1,5 @@
 -- Anime Center BR Extension for Shosetsu
-local id = 123456 -- ID único para a extensão
+local id = 12345 -- ID único para a extensão
 local baseURL = "https://animecenterbr.com"
 local name = "Anime Center BR"
 
