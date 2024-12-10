@@ -1,19 +1,23 @@
+-- Usando o módulo HTTP fornecido pelo Shosetsu
 local json = require("cjson")
 
 -- Função para obter a lista de novels
 local function getNovelsList()
     local url = "https://animecenterbr.com/wp-json/wp/v2/pages/17073"
     local response_body = {}
+    
+    -- Requisição HTTP usando o método `http.request`
     local res, code = http.request{
         url = url,
-        sink = ltn12.sink.table(response_body)
+        sink = ltn12.sink.table(response_body)  -- Coleta a resposta na tabela `response_body`
     }
 
     if res then
-        local data = json.decode(table.concat(response_body))
+        local data = json.decode(table.concat(response_body))  -- Converte a resposta JSON em tabela Lua
         local contentHTML = data.content.rendered
         local novels = {}
 
+        -- Extrai o título e o link das novels usando expressões regulares
         for link, title in contentHTML:gmatch('<a href="(.-)".->(.-)</a>') do
             table.insert(novels, {
                 title = title,
@@ -31,13 +35,15 @@ end
 local function getNovelDetails(postID)
     local url = "https://animecenterbr.com/wp-json/wp/v2/posts/" .. postID
     local response_body = {}
+    
+    -- Requisição HTTP
     local res, code = http.request{
         url = url,
         sink = ltn12.sink.table(response_body)
     }
 
     if res then
-        local data = json.decode(table.concat(response_body))
+        local data = json.decode(table.concat(response_body))  -- Decodifica o JSON da resposta
         return {
             title = data.title.rendered,
             description = data.content.rendered,
@@ -60,8 +66,8 @@ local function getChapterContent(chapterURL)
     }
 
     if res then
-        local data = json.decode(table.concat(response_body))
-        return data.html
+        local data = json.decode(table.concat(response_body))  -- Decodifica a resposta JSON
+        return data.html  -- Retorna o conteúdo HTML do capítulo
     end
 
     return nil
