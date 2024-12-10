@@ -1,82 +1,33 @@
 -- Anime Center BR Extension for Shosetsu
-local id = 12345 -- ID único para a extensão
+local id = 12345  -- ID único para a extensão
 local baseURL = "https://animecenterbr.com"
 local name = "Anime Center BR"
 
-local function shrinkURL(url)
-    return url:gsub("^" .. baseURL, "")
-end
-
-local function expandURL(path)
-    return baseURL .. path
-end
-
-local function getPassage(url)
-    -- Realiza uma requisição HTTP para obter o conteúdo da página do capítulo
-    local response = http:get(url)
-    
-    if response then
-        local html = response:html()
-        
-        -- Extraia o conteúdo do capítulo usando o seletor CSS correto
-        local content = html:select("div.post-text-content.my-3") -- Substitua pelo seletor exato da página
-        
-        if content then
-            return content:html() -- Retorna o HTML do capítulo
-        end
-    end
-    
-    return nil -- Retorna nil se a requisição falhar ou o conteúdo não for encontrado
-end
-
-return {
-    getPassage = getPassage -- Retorna a função como parte da extensão
-}
-
-
-
--- Função para buscar capítulos de uma novel
-local function getChapterList(novelID)
-    local url = expandURL("/wp-json/wp/v2/posts/" .. novelID)
-    local data = GETJson(url)
-    local chapters = {}
+-- Função para buscar a lista de novels
+local function getNovelList()
+    local url = "https://animecenterbr.com/wp-json/wp/v2/pages/17073"
+    local data = GETJson(url)  -- Requisição JSON para obter a lista de páginas
     local contentHTML = data.content.rendered
-    -- Parse manual da lista de capítulos se necessário
-    -- Inserir capítulos na tabela chapters
-    return chapters
-end
 
--- Função para processar uma novel
-local function parseNovel(novelID)
-    local url = expandURL("/wp-json/wp/v2/posts/" .. novelID)
-    local data = GETJson(url)
-    return NovelInfo {
-        title = data.title.rendered,
-        imageURL = data.featured_media_url or "",
-        description = data.content.rendered,
-        chapters = getChapterList(novelID)
-    }
-end
-
--- Função para processar a lista de novels
-local function parseList()
-    local url = expandURL("/wp-json/wp/v2/pages/17073")
-    local data = GETJson(url)
-    local contentHTML = data.content.rendered
     local novels = {}
-    -- Parse manual do HTML para extrair títulos e links
-    return novels
+    -- Parse simples para pegar títulos e links das novels
+    for link in contentHTML:gmatch('<a href="(https?://[a-zA-Z0-9./_-]+)">([%w%s]+)</a>') do
+        local url, title = link
+        table.insert(novels, {title = title, url = url})  -- Insere o título e URL da novel
+    end
+
+    return novels  -- Retorna a lista de novels
 end
 
+-- Retorna a estrutura da extensão
 return {
     id = id,
     name = name,
     baseURL = baseURL,
     hasSearch = false,
     listings = {
-        Listing("Lista de Novels", true, function(data)
-            return parseList()
+        Listing("Lista de Novels", true, function()
+            return getNovelList()  -- Chama a função que retorna a lista de novels
         end)
-    },
-    parseNovel = parseNovel
+    }
 }
