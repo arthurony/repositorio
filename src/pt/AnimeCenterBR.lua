@@ -1,4 +1,4 @@
--- {"id":12345,"ver":"1.0.0","libVer":"1.0.0","author":"arthurony"}
+-- {"id":93083,"ver":"3.0.0","libVer":"1.0.0","author":"MechTechnology"}
 local baseURL = "https://animecenterbr.com/"
 
 local function text(v)
@@ -14,8 +14,8 @@ local function expandURL(url)
 end
 
 return {
-    id = 12345,
-    name = "Anime Center BR",
+    id = 93083,
+    name = "AnimeCenterBR",
     baseURL = baseURL,
     imageURL = "https://raw.githubusercontent.com/arthurony/repositorio/refs/heads/main/icons/animecenterbr.png",
     hasSearch = false,
