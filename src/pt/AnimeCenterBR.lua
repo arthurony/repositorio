@@ -11,6 +11,25 @@ local function expandURL(path)
     return baseURL .. path
 end
 
+function getPassage(url)
+    -- Realiza uma requisição HTTP para obter o conteúdo da página do capítulo
+    local response = http:get(url)
+    
+    if response then
+        local html = response:html()
+        
+        -- Extraia o conteúdo do capítulo usando seletores CSS
+        local content = html:select("div.post-text-content my-3") -- Altere 'div.entry-content' para o seletor correto da página
+        
+        if content then
+            return content:html() -- Retorna o HTML do capítulo
+        end
+    end
+    
+    return nil -- Retorna nil se a requisição falhar ou o conteúdo não for encontrado
+end
+
+
 -- Função para buscar capítulos de uma novel
 local function getChapterList(novelID)
     local url = expandURL("/wp-json/wp/v2/posts/" .. novelID)
@@ -43,29 +62,6 @@ local function parseList()
     -- Parse manual do HTML para extrair títulos e links
     return novels
 end
-
-function getPassage(url)
-    -- Extrai o ID do post do URL (pode ser necessário ajustar dependendo do formato do URL)
-    local id = url:match("posts/(%d+)")
-    if not id then return nil end
-
-    -- Monta o endpoint da API com o ID do post
-    local apiUrl = "https://animecenterbr.com/wp-json/wp/v2/posts/" .. id
-
-    -- Faz uma requisição HTTP para a API
-    local response = http:get(apiUrl)
-    if response then
-        -- Faz o parse do JSON retornado
-        local json = response:json()
-        if json and json.content and json.content.rendered then
-            -- Retorna o conteúdo do capítulo
-            return json.content.rendered
-        end
-    end
-
-    return nil -- Retorna nil caso algo dê errado
-end
-
 
 return {
     id = id,
